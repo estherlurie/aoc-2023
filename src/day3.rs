@@ -28,7 +28,10 @@ fn part1(lines: Vec<String>) {
 
 fn part2(lines: Vec<String>) {
     let mut parts_adjacent_to_gears = HashMap::<Position, Vec<PartNumber>>::new();
+    // Find all gear positions
     let gear_positions = get_gear_positions(&lines);
+
+    // Get all parts adjacent to gears, and build out map
     for (part_number, gear_position) in lines
         .iter()
         .enumerate()
@@ -73,7 +76,6 @@ impl fmt::Display for Position {
     }
 }
 
-#[derive(Debug)]
 struct PartNumber {
     id: usize,
     position: Position,
