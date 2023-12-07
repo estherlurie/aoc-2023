@@ -1,5 +1,3 @@
-use num_format::{Locale, ToFormattedString};
-
 use crate::Part;
 
 pub fn run(lines: Vec<String>, part: Part) {
@@ -94,9 +92,6 @@ fn part2(lines: Vec<String>) {
     }
 
     for location in 0u64.. {
-        if location % 100000 == 0 {
-            println!("Checking {}", location.to_formatted_string(&Locale::en));
-        }
         let mut n = location;
         for map in &maps {
             if let Some(m) = map.iter().fold(None, |maybe, curr_map| {
