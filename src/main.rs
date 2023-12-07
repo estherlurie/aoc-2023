@@ -1,11 +1,3 @@
-#![warn(
-    clippy::all,
-    clippy::restriction,
-    clippy::pedantic,
-    clippy::nursery,
-    clippy::cargo
-)]
-
 mod template;
 
 mod day1;
@@ -48,8 +40,7 @@ fn main() {
         3 => day3::run(lines, args.part),
         4 => day4::run(lines, args.part),
         5 => day5::run(lines, args.part),
-        6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23
-        | 24 | 25 => panic!("Day not yet implemented"),
+        6..=25 => panic!("Day not yet implemented"),
         _ => panic!("Entered a day that has not yet been implemented"),
     }
 }
