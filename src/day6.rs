@@ -18,7 +18,10 @@ fn part1(lines: Vec<String>) {
     println!("Product of number of ways to beat each race: {answer}");
 }
 
-fn part2(_lines: Vec<String>) {}
+fn part2(lines: Vec<String>) {
+    let answer = get_single_race(lines).number_ways_to_beat_record();
+    println!("Number of ways to beat longer race: {answer}");
+}
 
 struct Race {
     time: u64,
@@ -51,6 +54,22 @@ impl Race {
 
         1 + maximum_time_holding_button - minimum_time_holding_button
     }
+}
+
+fn get_single_race(lines: Vec<String>) -> Race {
+    Race::new(parse_single_num(&lines[0]), parse_single_num(&lines[1]))
+}
+
+fn parse_single_num(line: &str) -> u64 {
+    let grouped_numbers = line
+        .split_once(':')
+        .unwrap()
+        .1
+        .trim()
+        .chars()
+        .filter(|c| !c.is_whitespace())
+        .collect::<String>();
+    str::parse::<u64>(&grouped_numbers).unwrap()
 }
 
 fn get_races(lines: Vec<String>) -> Vec<Race> {
