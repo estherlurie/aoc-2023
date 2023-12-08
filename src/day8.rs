@@ -19,26 +19,30 @@ fn part1(lines: Vec<String>) {
 
 fn part2(lines: Vec<String>) {
     let map = get_map(&lines[2..]);
-    let mut totals = map
+    let totals = map
         .keys()
         .filter(|k| k.ends_with("A"))
         .map(String::to_owned)
         .map(|start| steps(&lines[0], start, &map))
-        .collect::<Vec<u128>>();
-    println!("{totals:?}");
-    let mut lcm = 2;
-    loop {
-        if totals.iter().all(|steps| steps % lcm == 0) {
-            let steps = lcm * lines[2..].len() as u128;
-            println!("All nodes reach end in {steps} steps!");
-            return;
-        } else {
-            lcm += 1;
-        }
-    }
+        .collect::<Vec<u64>>();
+    let answer = totals.iter().fold(1, |x, steps| lcm(x, *steps));
+    println!("Steps for all to be on Z: {answer}");
 }
 
-fn steps(direction_str: &str, start: String, map: &HashMap<String, Elements>) -> u128 {
+fn gcd(mut a: u64, mut b: u64) -> u64 {
+    while b != 0 {
+        let tmp = a;
+        a = b;
+        b = tmp % b;
+    }
+    a
+}
+
+fn lcm(a: u64, b: u64) -> u64 {
+    a * b / gcd(a, b)
+}
+
+fn steps(direction_str: &str, start: String, map: &HashMap<String, Elements>) -> u64 {
     let mut node = start;
     let mut step_count = 0;
     for direction in direction_str.chars().map(Direction::from_char).cycle() {
