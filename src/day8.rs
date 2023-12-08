@@ -29,19 +29,6 @@ fn part2(lines: Vec<String>) {
     println!("Steps for all to be on Z: {answer}");
 }
 
-fn gcd(mut a: u64, mut b: u64) -> u64 {
-    while b != 0 {
-        let tmp = a;
-        a = b;
-        b = tmp % b;
-    }
-    a
-}
-
-fn lcm(a: u64, b: u64) -> u64 {
-    a * b / gcd(a, b)
-}
-
 fn steps(direction_str: &str, start: String, map: &HashMap<String, Elements>) -> u64 {
     let mut node = start;
     let mut step_count = 0;
@@ -54,6 +41,32 @@ fn steps(direction_str: &str, start: String, map: &HashMap<String, Elements>) ->
         }
     }
     0
+}
+
+fn get_map(lines: &[String]) -> HashMap<String, Elements> {
+    let mut map = HashMap::new();
+    for line in lines {
+        let (key, nodes) = line.split_once('=').unwrap();
+        let key = key.trim().to_string();
+        let (left, right) = nodes.trim().split_once(',').unwrap();
+        let left = left.trim().strip_prefix('(').unwrap().to_string();
+        let right = right.trim().strip_suffix(')').unwrap().to_string();
+        map.insert(key, Elements::new(left, right));
+    }
+    map
+}
+
+fn lcm(a: u64, b: u64) -> u64 {
+    a * b / gcd(a, b)
+}
+
+fn gcd(mut a: u64, mut b: u64) -> u64 {
+    while b != 0 {
+        let tmp = a;
+        a = b;
+        b = tmp % b;
+    }
+    a
 }
 
 enum Direction {
@@ -87,17 +100,4 @@ impl Elements {
             Direction::Right => &self.right,
         }
     }
-}
-
-fn get_map(lines: &[String]) -> HashMap<String, Elements> {
-    let mut map = HashMap::new();
-    for line in lines {
-        let (key, nodes) = line.split_once('=').unwrap();
-        let key = key.trim().to_string();
-        let (left, right) = nodes.trim().split_once(',').unwrap();
-        let left = left.trim().strip_prefix('(').unwrap().to_string();
-        let right = right.trim().strip_suffix(')').unwrap().to_string();
-        map.insert(key, Elements::new(left, right));
-    }
-    map
 }
