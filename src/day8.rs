@@ -21,7 +21,7 @@ fn part2(lines: Vec<String>) {
     let map = get_map(&lines[2..]);
     let totals = map
         .keys()
-        .filter(|k| k.ends_with("A"))
+        .filter(|k| k.ends_with('A'))
         .map(String::to_owned)
         .map(|start| steps(&lines[0], start, &map))
         .collect::<Vec<u64>>();
@@ -46,7 +46,7 @@ fn steps(direction_str: &str, start: String, map: &HashMap<String, Elements>) ->
     let mut node = start;
     let mut step_count = 0;
     for direction in direction_str.chars().map(Direction::from_char).cycle() {
-        if node.ends_with("Z") {
+        if node.ends_with('Z') {
             return step_count;
         } else {
             node = map.get(&node).unwrap().get(&direction).to_string();
@@ -95,8 +95,8 @@ fn get_map(lines: &[String]) -> HashMap<String, Elements> {
         let (key, nodes) = line.split_once('=').unwrap();
         let key = key.trim().to_string();
         let (left, right) = nodes.trim().split_once(',').unwrap();
-        let left = left.trim().strip_prefix("(").unwrap().to_string();
-        let right = right.trim().strip_suffix(")").unwrap().to_string();
+        let left = left.trim().strip_prefix('(').unwrap().to_string();
+        let right = right.trim().strip_suffix(')').unwrap().to_string();
         map.insert(key, Elements::new(left, right));
     }
     map
