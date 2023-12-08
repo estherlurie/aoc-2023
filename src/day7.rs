@@ -87,7 +87,7 @@ trait Card {
         Self: Sized;
 }
 
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
 enum RegularCard {
     Num(u32),
     Jack,
@@ -153,7 +153,7 @@ impl Card for RegularCard {
     }
 }
 
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
 enum JokerCard {
     Joker,
     Num(u32),
@@ -219,29 +219,20 @@ impl Card for JokerCard {
                 .map(|c| c.as_regular_card())
                 .collect::<Vec<RegularCard>>(),
         );
-        match joker_count {
-            0 => regular_hand_type,
-            1 => match regular_hand_type {
-                Type::HighCard => Type::OnePair,
-                Type::OnePair => Type::ThreeOfAKind,
-                Type::TwoPair => Type::FullHouse,
-                Type::ThreeOfAKind => Type::FourOfAKind,
-                Type::FourOfAKind => Type::FiveOfAKind,
-                t => panic!("Invalid hand type found: {t:?}"),
-            },
-            2 => match regular_hand_type {
-                Type::OnePair => Type::ThreeOfAKind,
-                Type::TwoPair => Type::FourOfAKind,
-                Type::FullHouse => Type::FiveOfAKind,
-                t => panic!("Invalid hand type found: {t:?}"),
-            },
-            3 => match regular_hand_type {
-                Type::ThreeOfAKind => Type::FourOfAKind,
-                Type::FullHouse => Type::FiveOfAKind,
-                t => panic!("Invalid hand type found: {t:?}"),
-            },
-            4 | 5 => Type::FiveOfAKind,
-            _ => panic!("There can only be 5 cards max"),
+        match (joker_count, regular_hand_type) {
+            (0, regular_hand_type) => regular_hand_type,
+            (1, Type::HighCard) => Type::OnePair,
+            (1, Type::OnePair) | (2, Type::OnePair) => Type::ThreeOfAKind,
+            (1, Type::TwoPair) => Type::FullHouse,
+            (1, Type::ThreeOfAKind) | (2, Type::TwoPair) | (3, Type::ThreeOfAKind) => {
+                Type::FourOfAKind
+            }
+            (1, Type::FourOfAKind)
+            | (2, Type::FullHouse)
+            | (3, Type::FullHouse)
+            | (4, _)
+            | (5, _) => Type::FiveOfAKind,
+            (count, t) => panic!("Unknown pairing found: {count} with {t:?}"),
         }
     }
 }
