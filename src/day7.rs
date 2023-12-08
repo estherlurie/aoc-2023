@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    hash::Hash,
+};
 
 use crate::Part;
 
@@ -19,9 +22,7 @@ fn part2(lines: Vec<String>) {
     compute_winnings::<JokerCard>(lines);
 }
 
-fn compute_winnings<C: Card + Eq + std::hash::Hash + Ord + PartialEq + PartialOrd>(
-    lines: Vec<String>,
-) {
+fn compute_winnings<C: Card + Eq + Hash + Ord + PartialEq + PartialOrd>(lines: Vec<String>) {
     let mut hands = lines
         .iter()
         .map(String::as_str)
@@ -47,7 +48,7 @@ where
     bid: u32,
 }
 
-impl<C: Card + Eq + std::hash::Hash + PartialEq> Hand<C> {
+impl<C: Card + Eq + Hash + PartialEq> Hand<C> {
     fn from_str(line: &str) -> Self {
         let (cards_str, bid_str) = line.split_once(' ').unwrap();
         let cards = cards_str.chars().map(Card::from_str).collect::<Vec<C>>();
@@ -80,7 +81,7 @@ trait Card {
     fn from_str(c: char) -> Self
     where
         Self: Sized;
-    fn as_char(&self) -> char;
+
     fn hand_type(cards: &[Self]) -> Type
     where
         Self: Sized;
@@ -107,16 +108,6 @@ impl Card for RegularCard {
             'K' => RegularCard::King,
             'A' => RegularCard::Ace,
             _ => panic!("Unknown card {c}"),
-        }
-    }
-    fn as_char(&self) -> char {
-        match self {
-            RegularCard::Num(10) => 'T',
-            RegularCard::Num(i) => char::from_digit(*i, 10).unwrap(),
-            RegularCard::Jack => 'J',
-            RegularCard::Queen => 'Q',
-            RegularCard::King => 'K',
-            RegularCard::Ace => 'A',
         }
     }
 
@@ -197,16 +188,6 @@ impl Card for JokerCard {
             _ => panic!("Unknown card {c}"),
         }
     }
-    fn as_char(&self) -> char {
-        match self {
-            JokerCard::Joker => 'J',
-            JokerCard::Num(10) => 'T',
-            JokerCard::Num(i) => char::from_digit(*i, 10).unwrap(),
-            JokerCard::Queen => 'Q',
-            JokerCard::King => 'K',
-            JokerCard::Ace => 'A',
-        }
-    }
 
     fn hand_type(cards: &[JokerCard]) -> Type {
         // Initialize count map
@@ -218,18 +199,18 @@ impl Card for JokerCard {
         let joker_count = counts.get(&JokerCard::Joker).unwrap_or(&0);
 
         /*
-        ABCDE - No Joker
-        ABCDJ - 1 Joker, all diff -> 1 pair
-        AABCJ - 1 Joker, 1 pair -> 3 of a kind
-        AABBJ - 1 Joker, 2 pair -> full house
-        AAABJ - 1 Joker, 3 of a kind -> 4 of a kind
-        AAAAJ - 1 Joker, 4 of a kind -> 5 of a kind
-        ABCJJ - 2 Joker, 1 pair -> 3 of a kind
-        AABJJ - 2 Joker, 2 pair -> 4 of a kind
-        AAAJJ - 2 Joker, full house -> 5 of a kind
-        ABJJJ - 3 Joker, 3 of a kind -> 4 of a kind
-        AAJJJ - 3 Joker, full house -> 5 of a kind
-        AJJJJ - 4 Joker, 4 of a kind -> 5 of a kind
+        ZYXWV - No Joker
+        ZYXWJ - 1 Joker, all diff -> 1 pair
+        ZZYXJ - 1 Joker, 1 pair -> 3 of a kind
+        ZZYYJ - 1 Joker, 2 pair -> full house
+        ZZZYJ - 1 Joker, 3 of a kind -> 4 of a kind
+        ZZZZJ - 1 Joker, 4 of a kind -> 5 of a kind
+        ZYXJJ - 2 Joker, 1 pair -> 3 of a kind
+        ZZYJJ - 2 Joker, 2 pair -> 4 of a kind
+        ZZZJJ - 2 Joker, full house -> 5 of a kind
+        ZYJJJ - 3 Joker, 3 of a kind -> 4 of a kind
+        ZZJJJ - 3 Joker, full house -> 5 of a kind
+        ZJJJJ - 4 Joker, 4 of a kind -> 5 of a kind
         JJJJJ - 5 Joker, 5 of a kind
         */
         let regular_hand_type = RegularCard::hand_type(
