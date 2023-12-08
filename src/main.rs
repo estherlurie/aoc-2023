@@ -7,6 +7,7 @@ mod day4;
 mod day5;
 mod day6;
 mod day7;
+mod day8;
 
 use clap::{Parser, ValueEnum};
 
@@ -44,7 +45,8 @@ fn main() {
         5 => day5::run(lines, args.part),
         6 => day6::run(lines, args.part),
         7 => day7::run(lines, args.part),
-        8..=25 => panic!("Day not yet implemented"),
+        8 => day8::run(lines, args.part),
+        9..=25 => panic!("Day not yet implemented"),
         _ => panic!("Entered a day that has not yet been implemented"),
     }
 }
