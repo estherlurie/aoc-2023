@@ -32,9 +32,8 @@ fn compute_winnings<C: Card + Eq + Hash + Ord + PartialEq + PartialOrd>(lines: V
     let total_winnings = hands
         .iter()
         .enumerate()
-        .fold(0, |running_total, (idx, hand)| {
-            running_total + ((idx as u32 + 1) * hand.bid)
-        });
+        .map(|(idx, hand)| (idx as u32 + 1) * hand.bid)
+        .sum::<u32>();
     println!("Total winnings: {total_winnings}");
 }
 
@@ -43,7 +42,7 @@ struct Hand<C>
 where
     C: Card,
 {
-    hand_type: Type,
+    hand_type: HandType,
     cards: Vec<C>,
     bid: u32,
 }
@@ -53,21 +52,17 @@ impl<C: Card + Eq + Hash + PartialEq> Hand<C> {
         let (cards_str, bid_str) = line.split_once(' ').unwrap();
         let cards = cards_str.chars().map(Card::from_str).collect::<Vec<C>>();
         let bid = str::parse::<u32>(bid_str).unwrap();
-        let hand_type = Hand::hand_type(&cards);
+        let hand_type = C::hand_type(&cards);
         Hand {
             cards,
             bid,
             hand_type,
         }
     }
-
-    fn hand_type(cards: &[C]) -> Type {
-        C::hand_type(cards)
-    }
 }
 
 #[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
-enum Type {
+enum HandType {
     HighCard,
     OnePair,
     TwoPair,
@@ -82,7 +77,7 @@ trait Card {
     where
         Self: Sized;
 
-    fn hand_type(cards: &[Self]) -> Type
+    fn hand_type(cards: &[Self]) -> HandType
     where
         Self: Sized;
 }
@@ -111,10 +106,10 @@ impl Card for RegularCard {
         }
     }
 
-    fn hand_type(cards: &[RegularCard]) -> Type {
+    fn hand_type(cards: &[RegularCard]) -> HandType {
         let card_set = HashSet::<&RegularCard>::from_iter(cards.iter());
         match card_set.len() {
-            1 => Type::FiveOfAKind,
+            1 => HandType::FiveOfAKind,
             2 => {
                 let first_card = &cards[0];
                 let mut count = 0;
@@ -124,9 +119,9 @@ impl Card for RegularCard {
                     }
                 }
                 if count == 1 || count == 4 {
-                    Type::FourOfAKind
+                    HandType::FourOfAKind
                 } else {
-                    Type::FullHouse
+                    HandType::FullHouse
                 }
             }
             3 => {
@@ -137,17 +132,17 @@ impl Card for RegularCard {
                         .and_modify(|count| *count += 1)
                         .or_insert(1);
                 }
-                let mut hand_type = Type::ThreeOfAKind;
+                let mut hand_type = HandType::ThreeOfAKind;
                 for (_, count) in counts.iter() {
                     if *count == 2 {
-                        hand_type = Type::TwoPair;
+                        hand_type = HandType::TwoPair;
                         break;
                     }
                 }
                 hand_type
             }
-            4 => Type::OnePair,
-            5 => Type::HighCard,
+            4 => HandType::OnePair,
+            5 => HandType::HighCard,
             _ => unreachable!(),
         }
     }
@@ -189,17 +184,15 @@ impl Card for JokerCard {
         }
     }
 
-    fn hand_type(cards: &[JokerCard]) -> Type {
-        // Initialize count map
+    fn hand_type(cards: &[JokerCard]) -> HandType {
         let mut counts = HashMap::<&JokerCard, u8>::new();
         for c in cards {
             counts.entry(c).and_modify(|count| *count += 1).or_insert(1);
         }
-        // Get joker count
         let joker_count = counts.get(&JokerCard::Joker).unwrap_or(&0);
 
         /*
-        ZYXWV - No Joker
+        ZYXWV | ZZYXW | ZZYYX | ZZZYY | ZZZZY | ZZZZZ - No Joker -> whatever it is
         ZYXWJ - 1 Joker, all diff -> 1 pair
         ZZYXJ - 1 Joker, 1 pair -> 3 of a kind
         ZZYYJ - 1 Joker, 2 pair -> full house
@@ -221,17 +214,17 @@ impl Card for JokerCard {
         );
         match (joker_count, regular_hand_type) {
             (0, regular_hand_type) => regular_hand_type,
-            (1, Type::HighCard) => Type::OnePair,
-            (1, Type::OnePair) | (2, Type::OnePair) => Type::ThreeOfAKind,
-            (1, Type::TwoPair) => Type::FullHouse,
-            (1, Type::ThreeOfAKind) | (2, Type::TwoPair) | (3, Type::ThreeOfAKind) => {
-                Type::FourOfAKind
+            (1, HandType::HighCard) => HandType::OnePair,
+            (1, HandType::OnePair) | (2, HandType::OnePair) => HandType::ThreeOfAKind,
+            (1, HandType::TwoPair) => HandType::FullHouse,
+            (1, HandType::ThreeOfAKind) | (2, HandType::TwoPair) | (3, HandType::ThreeOfAKind) => {
+                HandType::FourOfAKind
             }
-            (1, Type::FourOfAKind)
-            | (2, Type::FullHouse)
-            | (3, Type::FullHouse)
+            (1, HandType::FourOfAKind)
+            | (2, HandType::FullHouse)
+            | (3, HandType::FullHouse)
             | (4, _)
-            | (5, _) => Type::FiveOfAKind,
+            | (5, _) => HandType::FiveOfAKind,
             (count, t) => panic!("Unknown pairing found: {count} with {t:?}"),
         }
     }
