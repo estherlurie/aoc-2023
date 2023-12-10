@@ -14,7 +14,7 @@ fn part1(lines: Vec<String>) {
     for values in lines.iter().map(String::as_str).map(to_vec) {
         answer += last_of_sequence_diffs(vec![*values.last().unwrap()], &values)
             .iter()
-            .fold(0, |next_in_sequence, last| next_in_sequence + last);
+            .sum::<i32>();
     }
     println!("Sum of next sequence values: {answer}");
 }
