@@ -38,35 +38,28 @@ fn to_vec(line: &str) -> Vec<i32> {
 
 fn last_of_sequence_diffs(mut last_of_each_sequence: Vec<i32>, values: &[i32]) -> Vec<i32> {
     if values.iter().all(|v| *v == 0) {
-        last_of_each_sequence
-    } else {
-        let mut diffs = vec![];
-        let mut idx = 1;
-        while idx < values.len() {
-            diffs.push(values[idx] - values[idx - 1]);
-            idx += 1;
-        }
-        if let Some(last) = diffs.last() {
-            last_of_each_sequence.push(*last);
-        }
-        last_of_sequence_diffs(last_of_each_sequence, &diffs)
+        return last_of_each_sequence;
     }
+    let diffs = values
+        .windows(2)
+        .map(|window| window[1] - window[0])
+        .collect::<Vec<i32>>();
+    if let Some(last) = diffs.last() {
+        last_of_each_sequence.push(*last);
+    }
+    last_of_sequence_diffs(last_of_each_sequence, &diffs)
 }
 
 fn prev_of_sequence_diffs(mut first_of_each_sequence: Vec<i32>, values: &[i32]) -> Vec<i32> {
     if values.iter().all(|v| *v == 0) {
-        first_of_each_sequence
-    } else {
-        let mut diffs = vec![];
-        let mut idx = 1;
-        while idx < values.len() {
-            let diff = values[idx] - values[idx - 1];
-            diffs.push(diff);
-            idx += 1;
-        }
-        if let Some(first) = diffs.first() {
-            first_of_each_sequence.push(*first);
-        }
-        prev_of_sequence_diffs(first_of_each_sequence, &diffs)
+        return first_of_each_sequence;
     }
+    let diffs = values
+        .windows(2)
+        .map(|window| window[1] - window[0])
+        .collect::<Vec<i32>>();
+    if let Some(first) = diffs.first() {
+        first_of_each_sequence.push(*first);
+    }
+    prev_of_sequence_diffs(first_of_each_sequence, &diffs)
 }
