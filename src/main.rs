@@ -2,6 +2,7 @@ mod template;
 
 mod day1;
 mod day10;
+mod day11;
 mod day2;
 mod day3;
 mod day4;
@@ -50,7 +51,8 @@ fn main() {
         8 => day8::run(lines, args.part),
         9 => day9::run(lines, args.part),
         10 => day10::run(lines, args.part),
-        11..=25 => panic!("Day not yet implemented"),
+        11 => day11::run(lines, args.part),
+        12..=25 => panic!("Day not yet implemented"),
         _ => panic!("Entered a day that has not yet been implemented"),
     }
 }
