@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::Part;
 
 pub fn run(lines: Vec<String>, part: Part) {
@@ -10,46 +12,10 @@ pub fn run(lines: Vec<String>, part: Part) {
 }
 
 fn part1(lines: Vec<String>) {
-    // 0: Build navigable char map
-    let map = lines
-        .iter()
-        .map(|line| line.chars().collect())
-        .collect::<Vec<Vec<char>>>();
-
-    // 1: Find start
-    let mut s = None;
-    for (row, line) in map.iter().enumerate() {
-        if s.is_some() {
-            break;
-        }
-        for (col, c) in line.iter().enumerate() {
-            if *c == 'S' {
-                s = Some(Position::new(row, col));
-                break;
-            }
-        }
-    }
-    let start = Pipe::new(PipeType::TurnF, s.unwrap());
-
-    // 2: Get forward and backwards pipes
+    let map = build_map(lines);
+    let start = find_start(&map);
+    let mut pipes = get_adjacent_pipes(&start, &map);
     // Assumes that only two directions will be valid
-    let mut pipes = [
-        Direction::North,
-        Direction::South,
-        Direction::East,
-        Direction::West,
-    ]
-    .into_iter()
-    .map(|direction| {
-        (
-            direction.clone(),
-            try_get_pipe_type(&start, &direction, &map),
-        )
-    })
-    .filter(|(_, pipe_type)| pipe_type.is_some())
-    .map(|(direction, pipe_type)| (direction, pipe_type.unwrap()))
-    .collect::<Vec<(Direction, PipeType)>>();
-
     let (mut forward_dir, forward_pipe_type) = pipes.pop().unwrap();
     let (mut backwards_dir, backwards_pipe_type) = pipes.pop().unwrap();
 
@@ -104,12 +70,122 @@ fn try_get_pipe_type(pipe: &Pipe, direction: &Direction, map: &[Vec<char>]) -> O
     }
 }
 
-fn part2(_lines: Vec<String>) {}
+fn part2(lines: Vec<String>) {
+    // Calculate interior points with Pick's theorem
+    // loop_area = interior_points + (boundary_points / 2) - 1
+    // rewriting, we get
+    // interior_points = loop_area - (boundary_points / 2) - 1
+    // We get loop_area with the Shoelace formula
+    // border_points = (x1, y1), (x2, y2), (x3, y3), ...
+    // 2 * loop_area = x1 * y2 - y1 * x2 + x2 * y3 - y2 * x3 + ...
+    // loop_area = (result..) / 2
+    let map = build_map(lines);
+    let start = find_start(&map);
+    let mut adjacent_pipes = get_adjacent_pipes(&start, &map);
+    adjacent_pipes.pop();
+    let (mut cursor_dir, cursor_type) = adjacent_pipes.pop().unwrap();
 
-#[derive(Debug, PartialEq)]
+    let cursor_position = start
+        .position
+        .increment(&cursor_dir)
+        .expect("to be valid position");
+    let mut cursor_pipe = Pipe {
+        pipe_type: cursor_type,
+        position: cursor_position,
+    };
+
+    let mut border_points = vec![start.position.clone()];
+    let mut vertices = vec![start.position.clone()];
+
+    while cursor_pipe.position != start.position {
+        border_points.push(cursor_pipe.position.clone());
+        match cursor_pipe.pipe_type {
+            PipeType::TurnF | PipeType::Turn7 | PipeType::TurnJ | PipeType::TurnL => {
+                vertices.push(cursor_pipe.position.clone());
+            }
+            _ => (),
+        }
+
+        cursor_dir = cursor_pipe.move_through(&cursor_dir);
+        cursor_pipe.position = cursor_pipe
+            .position
+            .increment(&cursor_dir)
+            .expect("to be valid position");
+        cursor_pipe.pipe_type =
+            PipeType::from_map(&map, &cursor_pipe.position).expect("to be valid pipe");
+    }
+
+    let shoelace = vertices
+        .windows(2)
+        .map(|pair| {
+            let (x1, y1) = (pair[0].col as i32, pair[0].row as i32);
+            let (x2, y2) = (pair[1].col as i32, pair[1].row as i32);
+            x1 * y2 - x2 * y1
+        })
+        .sum::<i32>();
+    let last = vertices.last().unwrap();
+    let first = vertices.first().unwrap();
+    let shoelace = shoelace + ((last.col * first.row) as i32 - (last.row * first.col) as i32);
+
+    let loop_area = i32::abs(shoelace) / 2;
+    let interior_points = loop_area - (border_points.len() as i32 / 2) + 1;
+    println!("There are {interior_points} inside the loop!");
+}
+
+fn build_map(lines: Vec<String>) -> Vec<Vec<char>> {
+    lines
+        .iter()
+        .map(|line| line.chars().collect())
+        .collect::<Vec<Vec<char>>>()
+}
+
+fn find_start(map: &Vec<Vec<char>>) -> Pipe {
+    let mut s = None;
+
+    for (row, line) in map.iter().enumerate() {
+        if s.is_some() {
+            break;
+        }
+        for (col, c) in line.iter().enumerate() {
+            if *c == 'S' {
+                s = Some(Position::new(row, col));
+                break;
+            }
+        }
+    }
+
+    Pipe::new(PipeType::TurnF, s.unwrap())
+}
+
+fn get_adjacent_pipes(source: &Pipe, map: &Vec<Vec<char>>) -> Vec<(Direction, PipeType)> {
+    [
+        Direction::North,
+        Direction::South,
+        Direction::East,
+        Direction::West,
+    ]
+    .into_iter()
+    .map(|direction| {
+        (
+            direction.clone(),
+            try_get_pipe_type(source, &direction, map),
+        )
+    })
+    .filter(|(_, pipe_type)| pipe_type.is_some())
+    .map(|(direction, pipe_type)| (direction, pipe_type.unwrap()))
+    .collect::<Vec<(Direction, PipeType)>>()
+}
+
+#[derive(Clone, PartialEq)]
 struct Position {
     row: usize,
     col: usize,
+}
+
+impl fmt::Debug for Position {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({},{})", self.row, self.col)
+    }
 }
 
 impl Position {
@@ -145,6 +221,7 @@ enum PipeType {
     Turn7,
     TurnJ,
     TurnL,
+    S,
 }
 
 impl PipeType {
@@ -156,6 +233,7 @@ impl PipeType {
             '7' => Some(Self::Turn7),
             'J' => Some(Self::TurnJ),
             'L' => Some(Self::TurnL),
+            'S' => Some(Self::S),
             _ => None,
         }
     }
