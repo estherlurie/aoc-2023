@@ -139,7 +139,7 @@ fn build_map(lines: Vec<String>) -> Vec<Vec<char>> {
         .collect::<Vec<Vec<char>>>()
 }
 
-fn find_start(map: &Vec<Vec<char>>) -> Pipe {
+fn find_start(map: &[Vec<char>]) -> Pipe {
     let mut s = None;
 
     for (row, line) in map.iter().enumerate() {
@@ -157,7 +157,7 @@ fn find_start(map: &Vec<Vec<char>>) -> Pipe {
     Pipe::new(PipeType::TurnF, s.unwrap())
 }
 
-fn get_adjacent_pipes(source: &Pipe, map: &Vec<Vec<char>>) -> Vec<(Direction, PipeType)> {
+fn get_adjacent_pipes(source: &Pipe, map: &[Vec<char>]) -> Vec<(Direction, PipeType)> {
     [
         Direction::North,
         Direction::South,
